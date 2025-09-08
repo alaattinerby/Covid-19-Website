@@ -33,7 +33,7 @@ jobs:
         if: github.ref_name != 'main'
         run: |
           BRANCH_CARD_ID=$(echo "$BRANCH_NAME" | grep -oP '\d+$')
-          CARDS=$(curl -s "https://api.trello.com/1/boards/$TRELLO_BOARD_ID/cards?key=$TRELLO_KEY&token=$TRELLO_TOKEN" | grep -o '"idShort":[0-9]*' | sed 's/"idShort"://')
+          CARDS=$(curl -s "https://api.trello.com/1/boards/$TRELLO_BOARD_ID/cards?key=$TRELLO_KEY&token=$TRELLO_TOKEN" | jq -r '.[].idShort')
           if ! echo "$CARDS" | grep -Fxq "$BRANCH_CARD_ID"; then
             echo "Hata: Branch ile eşleşen Trello kartı bulunamadı."
             exit 1
