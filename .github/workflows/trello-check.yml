@@ -21,6 +21,7 @@ jobs:
           echo "TRELLO_BOARD_ID=${{ secrets.TRELLO_BOARD_ID }}" >> $GITHUB_ENV
 
       - name: Check branch format
+        if: github.ref_name != 'main'
         run: |
           BRANCH_NAME=${GITHUB_REF#refs/heads/}
           if [[ ! "$BRANCH_NAME" =~ ^#nSoft-[0-9]+$ ]]; then
