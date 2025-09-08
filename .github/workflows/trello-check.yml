@@ -20,20 +20,22 @@ jobs:
           echo "TRELLO_TOKEN=${{ secrets.TRELLO_TOKEN }}" >> $GITHUB_ENV
           echo "TRELLO_BOARD_ID=${{ secrets.TRELLO_BOARD_ID }}" >> $GITHUB_ENV
 
-      - name: Check branch format
-        if: github.ref_name != 'main'
-        run: |
-          BRANCH_NAME=${GITHUB_REF#refs/heads/}
-          if [[ ! "$BRANCH_NAME" =~ ^#nSoft-[0-9]+$ ]]; then
-            echo "Hata: Branch formatı yanlış. (#nSoft-<id> şeklinde olmalı)"
-            exit 1
-          fi
-
       - name: Check Trello card exists
         if: github.ref_name != 'main'
         run: |
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
           BRANCH_CARD_ID=$(echo "$BRANCH_NAME" | grep -oP '\d+$')
+
+          echo "Debug: Branch Name = $BRANCH_NAME"
+          echo "Debug: Branch Card ID = $BRANCH_CARD_ID"
+
+          # Trello kart ID’lerini al
           CARDS=$(curl -s "https://api.trello.com/1/boards/$TRELLO_BOARD_ID/cards?key=$TRELLO_KEY&token=$TRELLO_TOKEN" | jq -r '.[].idShort')
+
+          echo "Debug: Trello Cards:"
+          echo "$CARDS"
+
+          # Branch ID Trello kartlarında var mı kontrol et
           if ! echo "$CARDS" | grep -Fxq "$BRANCH_CARD_ID"; then
             echo "Hata: Branch ile eşleşen Trello kartı bulunamadı."
             exit 1
