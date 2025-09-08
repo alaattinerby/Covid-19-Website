@@ -1,12 +1,7 @@
 name: Trello Branch Check
 
 on:
-  push:
-    branches:
-      - "**"
   pull_request:
-    branches:
-      - main
 
 jobs:
   trello-check:
@@ -21,22 +16,21 @@ jobs:
           echo "TRELLO_BOARD_ID=${{ secrets.TRELLO_BOARD_ID }}" >> $GITHUB_ENV
 
       - name: Check Trello card exists
-        if: github.ref_name != 'main'
+        if: ${{ github.head_ref != github.base_ref }}
         run: |
-          BRANCH_NAME=${GITHUB_REF#refs/heads/}
-          BRANCH_CARD_ID=$(echo "$BRANCH_NAME" | grep -oP '\d+$')
+          BRANCH_NAME=${GITHUB_HEAD_REF}
+          BRANCH_CARD_ID=$(echo "$BRANCH_NAME" | grep -oE '[0-9]+$')
 
           echo "Debug: Branch Name = $BRANCH_NAME"
           echo "Debug: Branch Card ID = $BRANCH_CARD_ID"
 
-          # Trello kart ID’lerini al
-          CARDS=$(curl -s "https://api.trello.com/1/boards/$TRELLO_BOARD_ID/cards?key=$TRELLO_KEY&token=$TRELLO_TOKEN" | jq -r '.[].idShort')
+          # Tek kart sorgula
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://api.trello.com/1/boards/$TRELLO_BOARD_ID/cards/$BRANCH_CARD_ID?key=$TRELLO_KEY&token=$TRELLO_TOKEN")
 
-          echo "Debug: Trello Cards:"
-          echo "$CARDS"
-
-          # Branch ID Trello kartlarında var mı kontrol et
-          if ! echo "$CARDS" | grep -Fxq "$BRANCH_CARD_ID"; then
-            echo "Hata: Branch ile eşleşen Trello kartı bulunamadı."
+          if [ "$RESPONSE" -ne 200 ]; then
+            echo "Hata: Branch ile eşleşen Trello kartı bulunamadı (HTTP $RESPONSE)."
             exit 1
           fi
+
+          echo "Başarılı: Trello kartı bulundu ✅"
